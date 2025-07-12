@@ -1,0 +1,15 @@
+[project]
+name = "ai-video-editor"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "ffmpeg>=1.4",
+    "ffmpeg-python>=0.2.0",
+    "google-generativeai>=0.8.5",
+    "pathlib2>=2.3.7.post1",
+    "python-dotenv>=1.1.1",
+    "streamlit>=1.46.1",
+    "pysqlite3-binary == 0.5.4"
+]

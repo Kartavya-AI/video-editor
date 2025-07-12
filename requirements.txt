@@ -1,0 +1,6 @@
+ffmpeg==1.4
+ffmpeg-python==0.2.0
+google-generativeai==0.8.3
+python-dotenv==1.0.1
+streamlit==1.28.1
+pathlib2==2.3.7
