@@ -1,7 +1,3 @@
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-sys.modules["sqlite3.dbapi2"] = sys.modules["pysqlite3.dbapi2"]
 import streamlit as st
 import os
 import time
@@ -22,11 +18,13 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Initialize Gemini client with configurable API key
+# Initialize Gemini client
 @st.cache_resource
-def initialize_gemini(api_key):
-    genai.configure(api_key=api_key)
-    return genai.GenerativeModel('gemini-2.0-flash')
+def initialize_gemini():
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+    return genai.GenerativeModel('gemini-2.5-flash')
+
+gemini_model = initialize_gemini()
 
 # Create directories for file management
 @st.cache_resource
@@ -45,46 +43,6 @@ directories = setup_directories()
 # Title and description
 st.title("🎬 AI Video Editor")
 st.markdown("Upload a video and let AI analyze it to remove stutters, pauses, and improve the overall quality using FFmpeg.")
-
-# API Key Configuration in Sidebar
-st.sidebar.header("🔑 API Configuration")
-st.sidebar.markdown("Enter your Gemini API key to use the AI video editor:")
-
-# Check if key is already in environment (from previous session or .env file)
-default_gemini_key = os.environ.get('GEMINI_API_KEY', '')
-
-gemini_api_key = st.sidebar.text_input(
-    "Gemini API Key",
-    value=default_gemini_key,
-    type="password",
-    help="Get your Gemini API key from Google AI Studio at https://makersuite.google.com/app/apikey"
-)
-
-# API key validation
-if not gemini_api_key or not gemini_api_key.strip():
-    st.sidebar.error("Gemini API key is required")
-    st.error("⚠️ Please configure your Gemini API key in the sidebar to continue.")
-    st.info("""
-    **Required API Key:**
-    - **Gemini API Key**: Get it from [Google AI Studio](https://makersuite.google.com/app/apikey) for AI video analysis
-    
-    **Steps to get your API key:**
-    1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
-    2. Sign in with your Google account
-    3. Click "Create API Key"
-    4. Copy the generated key and paste it in the sidebar
-    """)
-    st.stop()
-
-# Set API key in environment and initialize Gemini
-os.environ['GEMINI_API_KEY'] = gemini_api_key
-try:
-    gemini_model = initialize_gemini(gemini_api_key)
-    st.sidebar.success("✅ Gemini API key configured successfully!")
-except Exception as e:
-    st.sidebar.error(f"❌ Invalid API key: {str(e)}")
-    st.error("❌ Invalid Gemini API key. Please check your API key and try again.")
-    st.stop()
 
 # Sidebar for settings
 st.sidebar.header("⚙️ Settings")
@@ -202,17 +160,6 @@ with col2:
                         
                 except Exception as e:
                     st.error(f"❌ Error during analysis: {str(e)}")
-                    
-                    # Show specific error messages for API issues
-                    error_str = str(e).lower()
-                    if "api key" in error_str or "authentication" in error_str:
-                        st.error("🔑 **API Key Issue**: Please check your Gemini API key in the sidebar.")
-                    elif "quota" in error_str or "limit" in error_str:
-                        st.error("📊 **Quota Issue**: You may have exceeded your API quota. Check your Google Cloud Console.")
-                    elif "permission" in error_str:
-                        st.error("🔒 **Permission Issue**: Your API key may not have the required permissions.")
-                    else:
-                        st.error(f"❌ **Unknown Error**: {str(e)}")
 
 # Display results if analysis is complete
 if hasattr(st.session_state, 'ffmpeg_command'):
@@ -574,7 +521,3 @@ if st.button("🧹 Clean Temporary Files", help="Remove temporary files created 
     - `{directories['output']}/`: Processed videos  
     - `{directories['logs']}/`: Commands and logs
     """)
-
-# Footer note about API key storage
-st.markdown("---")
-st.markdown("**Note**: Your API key is stored only for this session and is not saved permanently.")
